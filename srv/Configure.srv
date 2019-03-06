@@ -1,0 +1,16 @@
+# Source of webcam (e.g. '/dev/video0')
+string source
+# Width and height of input stream
+uint8 width
+uint8 height
+# Input format type (e.g. 'mjpeg')
+string input_format
+# Frame rate of input stream
+uint8 framerate
+# Horizontally flip input stream
+bool hflip
+# Vertically flip input stream
+bool vflip
+---
+bool success
+string message

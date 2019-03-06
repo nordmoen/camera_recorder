@@ -1,0 +1,7 @@
+# Output filename and path (e.g. 'experiment.mp4')
+string output
+# If file already exist overwrite?
+bool overwrite
+---
+bool success
+string message

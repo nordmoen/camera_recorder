@@ -1,0 +1,18 @@
+<launch>
+	<!-- Launch arguments -->
+	<arg name="source" default="/dev/video0" doc="Path to camera" />
+	<arg name="size" default="640x480" doc="Input stream resolution" />
+	<arg name="format" default="mjpeg" doc="Input stream format" />
+	<arg name="rate" default="30" doc="Input stream frame rate" />
+	<arg name="vflip" default="false" doc="Vertically flip stream" />
+	<arg name="hflip" default="false" doc="Horizontally flip stream" />
+
+	<node name="camera_recorder" pkg="camera_recorder" type="recorder.py">
+		<param name="source" value="$(arg source)" type="str" />
+		<param name="size" value="$(arg size)" type="str" />
+		<param name="format" value="$(arg format)" type="str" />
+		<param name="framerate" value="$(arg rate)" type="int" />
+		<param name="vflip" value="$(arg vflip)" type="bool" />
+		<param name="hflip" value="$(arg hflip)" type="bool" />
+	</node>
+</launch>
