@@ -11,6 +11,8 @@ uint8 framerate
 bool hflip
 # Vertically flip input stream
 bool vflip
+# Avoid decoding stream, incompatible with hflip and vflip!
+bool copy
 ---
 bool success
 string message

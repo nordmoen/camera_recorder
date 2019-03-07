@@ -6,6 +6,7 @@
 	<arg name="rate" default="30" doc="Input stream frame rate" />
 	<arg name="vflip" default="false" doc="Vertically flip stream" />
 	<arg name="hflip" default="false" doc="Horizontally flip stream" />
+	<arg name="copy" default="false" doc="Avoid decoding stream" />
 
 	<node name="camera_recorder" pkg="camera_recorder" type="recorder.py">
 		<param name="source" value="$(arg source)" type="str" />
@@ -14,5 +15,6 @@
 		<param name="framerate" value="$(arg rate)" type="int" />
 		<param name="vflip" value="$(arg vflip)" type="bool" />
 		<param name="hflip" value="$(arg hflip)" type="bool" />
+		<param name="copy" value="$(arg copy)" type="bool" />
 	</node>
 </launch>

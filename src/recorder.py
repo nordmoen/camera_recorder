@@ -9,14 +9,16 @@ import os
 import rospy
 import time
 
-
 # FFMPEG configuration, used to create FFMPEG process
 ffmpeg_cfg = None
 # Current FFMPEG process
 ffmpeg_proc = None
+# Should FFMPEG bypass encoding and simply copy
+ffmpeg_copy = False
 
 
-def configure(source, size, input_format, framerate, vflip=False, hflip=False):
+def configure(source, size, input_format, framerate, vflip=False, hflip=False,
+              copy=False):
     """
     Configure FFMPEG
 
@@ -26,11 +28,12 @@ def configure(source, size, input_format, framerate, vflip=False, hflip=False):
     :param int framerate: Frame rate of input stream
     :param bool vflip: Flip input stream vertically
     :param bool hflip: Flip input stream horizontally
+    :param bool copy: Avoid decoding stream
     """
-    _size = "{}x{}".format(*size)
-    global ffmpeg_cfg
+    global ffmpeg_cfg, ffmpeg_copy
     ffmpeg_cfg = ffmpeg.input(source, input_format=input_format,
-                              framerate=framerate, video_size=_size)
+                              framerate=framerate, video_size=size)
+    ffmpeg_copy = copy
     if vflip:
         ffmpeg_cfg = ffmpeg_cfg.vflip()
     if hflip:
@@ -44,16 +47,24 @@ def start_recording(output, overwrite=False):
     :param str output: Path and name of output file
     :param bool overwrite: If file already exist, overwrite?
     """
-    global ffmpeg_cfg, ffmpeg_proc
+    global ffmpeg_cfg, ffmpeg_proc, ffmpeg_copy
     full_path = os.path.abspath(output)
     directory = os.path.dirname(full_path)
     # If directory does not exist we automatically create it
     if not os.path.exists(directory):
         os.mkdir(directory)
-    cfg = ffmpeg_cfg.output(full_path)
+    if ffmpeg_copy:
+        cfg = ffmpeg_cfg.output(full_path, codec='copy')
+    else:
+        cfg = ffmpeg_cfg.output(full_path)
     if overwrite:
         cfg = cfg.overwrite_output()
     ffmpeg_proc = cfg.run_async(quiet=True)
+    # Wait a bit to let FFMPEG start
+    time.sleep(0.5)
+    # Check to see if process has failed
+    if ffmpeg_proc.poll() is not None:
+        raise RuntimeError("Configuration error, FFMPEG exited")
 
 
 def stop_recording():
@@ -61,19 +72,14 @@ def stop_recording():
     global ffmpeg_proc
     # Tell process to stop
     ffmpeg_proc.terminate()
-    ret = None
-    for _ in range(3):
-        ret = ffmpeg_proc.poll()
-        if not ret:
-            # If the process has not stopped we wait
-            # and try again
-            time.sleep(0.1)
-        else:
-            break
-    else:
-        rospy.logerr("FFMPEG did not respect 'terminate'!")
+    # Wait until process exits
+    ret = ffmpeg_proc.wait()
+    if not ret:
         ffmpeg_proc.kill()
+        ffmpeg_proc.wait()
     ffmpeg_proc = None
+    if ret != 255 and ret != 0:
+        raise RuntimeError("FFMPEG exited with code: {:d}".format(ret))
 
 
 def _start_callback(req):
@@ -115,7 +121,7 @@ def _cfg_callback(req):
     # the 'ffmpeg_proc' instance
     try:
         configure(req.source, (req.width, req.height), req.input_format,
-                  req.framerate, req.vflip, req.hflip)
+                  req.framerate, req.vflip, req.hflip, req.copy)
         return {'success': True, 'message': ""}
     except Exception as e:
         return {'success': False, 'message': str(e)}
@@ -130,8 +136,9 @@ if __name__ == '__main__':
     framerate = int(rospy.get_param('~framerate'))
     vflip = bool(rospy.get_param('~vflip', False))
     hflip = bool(rospy.get_param('~hflip', False))
+    copy = bool(rospy.get_param('~copy', False))
     # Configure camera
-    configure(source, size, input_format, framerate, vflip, hflip)
+    configure(source, size, input_format, framerate, vflip, hflip, copy)
     # Setup ROS service
     start = rospy.Service('~start', Record, _start_callback)
     stop = rospy.Service('~stop', Trigger, _stop_callback)
