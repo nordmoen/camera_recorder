@@ -32,7 +32,8 @@ def configure(source, size, input_format, framerate, vflip=False, hflip=False,
     """
     global ffmpeg_cfg, ffmpeg_copy
     ffmpeg_cfg = ffmpeg.input(source, input_format=input_format,
-                              framerate=framerate, video_size=size)
+                              framerate=framerate, video_size=size,
+                              v='error')
     ffmpeg_copy = copy
     if vflip:
         ffmpeg_cfg = ffmpeg_cfg.vflip()
@@ -59,12 +60,19 @@ def start_recording(output, overwrite=False):
         cfg = ffmpeg_cfg.output(full_path)
     if overwrite:
         cfg = cfg.overwrite_output()
-    ffmpeg_proc = cfg.run_async(quiet=True)
+    cfg = cfg.global_args('-hide_banner')
+    ffmpeg_proc = cfg.run_async(pipe_stderr=True)
     # Wait a bit to let FFMPEG start
     time.sleep(0.5)
     # Check to see if process has failed
     if ffmpeg_proc.poll() is not None:
-        raise RuntimeError("Configuration error, FFMPEG exited")
+        lines = ffmpeg_proc.stderr.readlines()
+        # If there are multiple strings we join here, this is only done
+        # to aid downstream users so that they can easier debug configuration
+        # problems
+        err_str = "-".join(lines)
+        raise RuntimeError("Configuration error, FFMPEG exited with error: "
+                           + err_str)
 
 
 def stop_recording():

@@ -66,3 +66,10 @@ $ v4l2-ctl --list-formats-ext
 # List supported formats for specific stream
 $ ffmpeg -f v4l2 -list_formats all -i /dev/video0
 ```
+
+## Direct copy
+If it is desired to avoid any-and-all processing of the input stream user should
+apply the `copy` option. This by-passes most processing by `ffmpeg`, but places
+restriction on what can be done. The `copy` option is incompatible with the
+`vflip` and `hflip` options and the output format is restricted to formats that
+can be directly copied from the input.
