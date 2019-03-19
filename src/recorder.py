@@ -58,8 +58,14 @@ def start_recording(output, overwrite=False):
         cfg = ffmpeg_cfg.output(full_path, codec='copy')
     else:
         cfg = ffmpeg_cfg.output(full_path)
+    # Configure overwrite settings
     if overwrite:
         cfg = cfg.overwrite_output()
+    else:
+        # Check that file does not exist
+        if os.path.exists(full_path):
+            raise RuntimeError("File '" + full_path + "' already exists and"
+                               + " 'overwrite' is False")
     cfg = cfg.global_args('-hide_banner')
     ffmpeg_proc = cfg.run_async(pipe_stderr=True)
     # Wait a bit to let FFMPEG start
