@@ -53,7 +53,11 @@ def start_recording(output, overwrite=False):
     directory = os.path.dirname(full_path)
     # If directory does not exist we automatically create it
     if not os.path.exists(directory):
-        os.mkdir(directory)
+        os.makedirs(directory)
+    # Check that the current user has write permission to desired path
+    if not os.access(directory, os.W_OK):
+        raise IOError("Can't write to path '{!s}/', not accessible to user"
+                      .format(directory))
     if ffmpeg_copy:
         cfg = ffmpeg_cfg.output(full_path, codec='copy')
     else:

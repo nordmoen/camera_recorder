@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>camera_recorder</name>
-  <version>0.1.1</version>
+  <version>0.1.2</version>
   <description>Record video using webcameras</description>
   <maintainer email="jorgehn@ifi.uio.no">Jørgen Nordmoen</maintainer>
   <license>MIT</license>
